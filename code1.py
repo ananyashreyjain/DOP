@@ -49,6 +49,8 @@ def _FBM_angles(L1, L2, L3, L4, theta1, theta3):
 		theta4 = np.arcsin((L2*np.sin(theta21)+ L3*np.sin(theta3) - L1*np.sin(theta1))/L4)
 		theta2 = theta21
 	else:
+		config={'draw':0}
+		return config
 		theta4 = np.arcsin((L2*np.sin(theta22)+ L3*np.sin(theta3) - L1*np.sin(theta1))/L4)
 		theta2 = theta22
 
@@ -57,6 +59,17 @@ def _FBM_angles(L1, L2, L3, L4, theta1, theta3):
 			'theta3':theta3,'theta4':theta4,
 			'draw':1}
 	return config
+	
+def _FBM_centroid(config):
+
+	A = np.linalg.inv(np.array([[(config['X6']-config['X4']),(config['X3']-config['X5'])],
+					[(config['X8'] - config['X2']),(config['X1']-config['X7'])]]))
+	B = np.array([config['X3']*config['X6'] - config['X4']*config['X5'],
+					config['X1']*config['X8'] - config['X2']*config['X7']])
+	C = np.matmul(A,B)
+	
+	config['X9'] = C[0]
+	config['X10'] = C[1]
 	
 def FBM_simulations(config):
 
@@ -72,18 +85,26 @@ def FBM_simulations(config):
 
 def plot(config):
 	print(config)
-	l1=ax.plot([config['X1'], config['X3']],[config['X2'], config['X4']])
-	l2=ax.plot([config['X3'], config['X5']],[config['X4'], config['X6']])
-	l3=ax.plot([config['X5'], config['X7']],[config['X6'], config['X8']])
-	l4=ax.plot([config['X7'], config['X1']],[config['X8'], config['X2']])
+	l1=ax.plot([config['X1'], config['X3']],[config['X2'], config['X4']],linestyle='-', marker='.')
+	l2=ax.plot([config['X3'], config['X5']],[config['X4'], config['X6']],linestyle='-', marker='.')
+	l3=ax.plot([config['X5'], config['X7']],[config['X6'], config['X8']],linestyle='-', marker='.')
+	l4=ax.plot([config['X7'], config['X1']],[config['X8'], config['X2']],linestyle='-', marker='.')
+	l5=ax.plot([config['X5'], config['X9']],[config['X6'], config['X10']],linestyle='--')
+	l6=ax.plot([config['X7'], config['X9']],[config['X8'], config['X10']],linestyle='--')
 	plt.pause(0.1)
+	mx = max(config['L1'], config['L2'], config['L3'], config['L4'])
+	fc = 5
+	plt.xlim(-fc*mx, fc*mx)
+	plt.ylim(-fc*mx, fc*mx)
 	l1.pop(0).remove()
 	l2.pop(0).remove()
 	l3.pop(0).remove()
 	l4.pop(0).remove()
+	l5.pop(0).remove()
+	l6.pop(0).remove()
 	
-fig,ax = plt.subplots(1,1, figsize=(5,5))
-for i in range(36):
+fig,ax = plt.subplots(1,1, figsize=(10,10))
+for i in range(360):
 	config = _FBM_angles(1,1,1,1,np.pi/6, 3*np.pi/4 + i*np.pi/18)
 	if not config['draw']:
 		print("Error")
@@ -91,4 +112,5 @@ for i in range(36):
 	config['X5'] = 0
 	config['X6'] = 0
 	FBM_simulations(config)
+	_FBM_centroid(config)
 	plot(config)
