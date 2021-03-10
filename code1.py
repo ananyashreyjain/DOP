@@ -36,24 +36,22 @@ def _FBM_angles(config):
 	 config['L3'],config['L4'],config['theta1'], config['theta3']
 
 	K = (L1**2 + L2**2 + L3**2 + L4**2)/2
-	A = K - L2*L3*np.cos(theta3) + L1*L2*np.cos(theta1) + L1*L3*np.cos(theta1-theta3)
+	A = K - L2*L3*np.cos(theta3) + L1*L2*np.cos(theta1) - L1*L3*np.cos(theta1-theta3)
 	B = 2*(L2*L3*np.sin(theta3) - L1*L2*np.sin(theta1))
 	C = K + L2*L3*np.cos(theta3) - L1*L2*np.cos(theta1) - L1*L3*np.cos(theta1-theta3)
 	
-	if B**2 + 4*A*C < 0:
-		config["draw":0]
+	if (B**2 + 4*A*C)>=0:
+		theta21 = 2*np.arctan((-B+(B**2 + 4*A*C)**0.5)/(2*A))
+		theta22 = 2*np.arctan((-B-(B**2 + 4*A*C)**0.5)/(2*A))
+	
+	else:
+		config['draw']=0
 		return config
-	
-	theta21 = 2*np.arctan((-B+(B**2 + 4*A*C)**0.5)/(2*A))
-	theta22 = 2*np.arctan((-B-(B**2 + 4*A*C)**0.5)/(2*A))
-	
 	
 	if -1<=((L2*np.sin(theta21)+ L3*np.sin(theta3) - L1*np.sin(theta1))/L4)<=1:
 		theta4 = np.arcsin((L2*np.sin(theta21)+ L3*np.sin(theta3) - L1*np.sin(theta1))/L4)
 		theta2 = theta21
 	else:
-		config={'draw':0}
-		return
 		theta4 = np.arcsin((L2*np.sin(theta22)+ L3*np.sin(theta3) - L1*np.sin(theta1))/L4)
 		theta2 = theta22
 		
@@ -85,12 +83,13 @@ def FBM_simulations(config):
 
 
 def plot(config):
-	l1=ax.plot([config['X1'], config['X3']],[config['X2'], config['X4']],linestyle='-', marker='x', color='b')
-	l2=ax.plot([config['X3'], config['X5']],[config['X4'], config['X6']],linestyle='-', marker='x', color='g')
-	l3=ax.plot([config['X5'], config['X7']],[config['X6'], config['X8']],linestyle='-', marker='x', color='r')
-	l4=ax.plot([config['X7'], config['X1']],[config['X8'], config['X2']],linestyle='-', marker='x', color='c')
+	l1=ax.plot([config['X1'], config['X3']],[config['X2'], config['X4']],linestyle='-', marker='x', color='b',label='l1')
+	l2=ax.plot([config['X3'], config['X5']],[config['X4'], config['X6']],linestyle='-', marker='x', color='g',label='l2')
+	l3=ax.plot([config['X5'], config['X7']],[config['X6'], config['X8']],linestyle='-', marker='x', color='r',label='l3')
+	l4=ax.plot([config['X7'], config['X1']],[config['X8'], config['X2']],linestyle='-', marker='x', color='c',label='l4')
 	l5=ax.plot([config['X5'], config['X9']],[config['X6'], config['X10']],linestyle='--', color='k')
 	l6=ax.plot([config['X7'], config['X9']],[config['X8'], config['X10']],linestyle='--', color='k')
+	ax.legend(loc='best')
 	cp=ax.scatter(config['X9'], config['X10'], marker='.', color='k')
 	plt.pause(config['pause'])
 	l1.pop(0).remove()
@@ -101,10 +100,10 @@ def plot(config):
 	l6.pop(0).remove()
 	
 
-config = {'L1':1,'L2':2,'L3':3,'L4':4,
-		'theta1':np.pi/6,'theta3':3*np.pi/4,
+config = {'L1':1,'L2':3.5,'L3':3,'L4':4,
+		'theta1':np.pi/8,'theta3':np.pi/2,
 		'draw':1,'fc': 3, 'pause':0.1, 'inc_fac': 200,
-		'frames':500}
+		'frames':200}
 fig,ax = plt.subplots(1,1, figsize=(10,10))
 mx = max(config['L1'], config['L2'], config['L3'], config['L4'])
 fc = config['fc']
