@@ -30,7 +30,10 @@ def knee_center():
 		Y1 = -np.sin(Varus) * X1 + ydist
 		Z1 = np.cos(Varus) * np.sin(IntRot) * X1 + zdist
 
-def _FBM_angles(L1, L2, L3, L4, theta1, theta3):
+def _FBM_angles(config):
+
+	L1, L2, L3, L4, theta1, theta3 = config['L1'],config['L2'],\
+	 config['L3'],config['L4'],config['theta1'], config['theta3']
 
 	K = (L1**2 + L2**2 + L3**2 + L4**2)/2
 	A = K - L2*L3*np.cos(theta3) + L1*L2*np.cos(theta1) + L1*L3*np.cos(theta1-theta3)
@@ -50,15 +53,13 @@ def _FBM_angles(L1, L2, L3, L4, theta1, theta3):
 		theta2 = theta21
 	else:
 		config={'draw':0}
-		return config
+		return
 		theta4 = np.arcsin((L2*np.sin(theta22)+ L3*np.sin(theta3) - L1*np.sin(theta1))/L4)
 		theta2 = theta22
-
-	config = {'L1':L1,'L2':L2,'L3':L3,'L4':L4,
-			'theta1':theta1,'theta2':theta2,
-			'theta3':theta3,'theta4':theta4,
-			'draw':1}
-	return config
+		
+	config['theta2']=theta2
+	config['theta4']=theta4
+		
 	
 def _FBM_centroid(config):
 
@@ -84,18 +85,13 @@ def FBM_simulations(config):
 
 
 def plot(config):
-	print(config)
 	l1=ax.plot([config['X1'], config['X3']],[config['X2'], config['X4']],linestyle='-', marker='.')
 	l2=ax.plot([config['X3'], config['X5']],[config['X4'], config['X6']],linestyle='-', marker='.')
 	l3=ax.plot([config['X5'], config['X7']],[config['X6'], config['X8']],linestyle='-', marker='.')
 	l4=ax.plot([config['X7'], config['X1']],[config['X8'], config['X2']],linestyle='-', marker='.')
 	l5=ax.plot([config['X5'], config['X9']],[config['X6'], config['X10']],linestyle='--')
 	l6=ax.plot([config['X7'], config['X9']],[config['X8'], config['X10']],linestyle='--')
-	plt.pause(0.1)
-	mx = max(config['L1'], config['L2'], config['L3'], config['L4'])
-	fc = 5
-	plt.xlim(-fc*mx, fc*mx)
-	plt.ylim(-fc*mx, fc*mx)
+	plt.pause(config['pause'])
 	l1.pop(0).remove()
 	l2.pop(0).remove()
 	l3.pop(0).remove()
@@ -103,9 +99,19 @@ def plot(config):
 	l5.pop(0).remove()
 	l6.pop(0).remove()
 	
+
+config = {'L1':1,'L2':2,'L3':3,'L4':4,
+		'theta1':np.pi/6,'theta3':3*np.pi/4,
+		'draw':1,'fc': 3, 'pause':0.1, 'inc_fac': 108,
+		'frames':100}
 fig,ax = plt.subplots(1,1, figsize=(10,10))
-for i in range(360):
-	config = _FBM_angles(1,1,1,1,np.pi/6, 3*np.pi/4 + i*np.pi/18)
+mx = max(config['L1'], config['L2'], config['L3'], config['L4'])
+fc = config['fc']
+plt.xlim(-fc*mx, fc*mx)
+plt.ylim(-fc*mx, fc*mx)
+for i in range(config['frames']):
+	config['theta3'] += np.pi/config['inc_fac']
+	_FBM_angles(config)
 	if not config['draw']:
 		print("Error")
 		continue
