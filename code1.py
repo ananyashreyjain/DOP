@@ -85,12 +85,12 @@ def FBM_simulations(config):
 
 
 def plot(config):
-	l1=ax.plot([config['X1'], config['X3']],[config['X2'], config['X4']],linestyle='-', marker='.')
-	l2=ax.plot([config['X3'], config['X5']],[config['X4'], config['X6']],linestyle='-', marker='.')
-	l3=ax.plot([config['X5'], config['X7']],[config['X6'], config['X8']],linestyle='-', marker='.')
-	l4=ax.plot([config['X7'], config['X1']],[config['X8'], config['X2']],linestyle='-', marker='.')
-	l5=ax.plot([config['X5'], config['X9']],[config['X6'], config['X10']],linestyle='--')
-	l6=ax.plot([config['X7'], config['X9']],[config['X8'], config['X10']],linestyle='--')
+	l1=ax.plot([config['X1'], config['X3']],[config['X2'], config['X4']],linestyle='-', marker='x', color = 'b')
+	l2=ax.plot([config['X3'], config['X5']],[config['X4'], config['X6']],linestyle='-', marker='x', color = 'g')
+	l3=ax.plot([config['X5'], config['X7']],[config['X6'], config['X8']],linestyle='-', marker='x', color = 'r')
+	l4=ax.plot([config['X7'], config['X1']],[config['X8'], config['X2']],linestyle='-', marker='x', color = 'c')
+	l5=ax.plot([config['X5'], config['X9']],[config['X6'], config['X10']],linestyle='--', color = 'k')
+	l6=ax.plot([config['X7'], config['X9']],[config['X8'], config['X10']],linestyle='--', color = 'k')
 	plt.pause(config['pause'])
 	l1.pop(0).remove()
 	l2.pop(0).remove()
@@ -102,8 +102,8 @@ def plot(config):
 
 config = {'L1':1,'L2':2,'L3':3,'L4':4,
 		'theta1':np.pi/6,'theta3':3*np.pi/4,
-		'draw':1,'fc': 3, 'pause':0.1, 'inc_fac': 108,
-		'frames':100}
+		'draw':1,'fc': 3, 'pause':0.1, 'inc_fac': 200,
+		'frames':500}
 fig,ax = plt.subplots(1,1, figsize=(10,10))
 mx = max(config['L1'], config['L2'], config['L3'], config['L4'])
 fc = config['fc']
