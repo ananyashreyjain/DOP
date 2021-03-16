@@ -33,6 +33,7 @@ def knee_center():
 		Z1 = np.cos(Varus) * np.sin(IntRot) * X1 + zdist
 		
 def read_file(config):
+
 	FBM_type = int(input("Enter type number 0 - 6 \n"))
 	df = pd.read_csv(config['filename'], header = None)
 	co_ordinates = 	df.iloc[FBM_type,:]
@@ -117,6 +118,7 @@ def FBM_simulations(config):
 
 
 def plot(config):
+
 	l1=ax.plot([config['X1'], config['X3']],[config['X2'], config['X4']],linestyle='-', marker='x', color='b',label='l1')
 	l2=ax.plot([config['X3'], config['X5']],[config['X4'], config['X6']],linestyle='-', marker='x', color='g',label='l2')
 	l3=ax.plot([config['X5'], config['X7']],[config['X6'], config['X8']],linestyle='-', marker='x', color='r',label='l3')
