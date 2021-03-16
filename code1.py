@@ -99,7 +99,6 @@ def _FBM_centroid(config):
 	
 def FBM_simulations(config):
 
-
 	if config['stance']:
 	
 		config['X5'] =  config['X3'] + config['L2']*np.cos(config['theta2'])
