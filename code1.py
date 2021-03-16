@@ -1,4 +1,5 @@
 import numpy as np
+from termcolor import colored
 import matplotlib.pyplot as plt
 
 def knee_center():
@@ -35,14 +36,14 @@ def _FBM_angles(config):
 	L1, L2, L3, L4, theta1, theta3 = config['L1'],config['L2'],\
 	 config['L3'],config['L4'],config['theta1'], config['theta3']
 
-	K = (L1**2 + L2**2 + L3**2 + L4**2)/2
+	K = (L1**2 + L2**2 + L3**2 - L4**2)/2
 	A = K - L2*L3*np.cos(theta3) + L1*L2*np.cos(theta1) - L1*L3*np.cos(theta1-theta3)
 	B = 2*(L2*L3*np.sin(theta3) - L1*L2*np.sin(theta1))
 	C = K + L2*L3*np.cos(theta3) - L1*L2*np.cos(theta1) - L1*L3*np.cos(theta1-theta3)
 	
-	if (B**2 + 4*A*C)>=0:
-		theta21 = 2*np.arctan((-B+(B**2 + 4*A*C)**0.5)/(2*A))
-		theta22 = 2*np.arctan((-B-(B**2 + 4*A*C)**0.5)/(2*A))
+	if (B**2 - 4*A*C)>=0:
+		theta21 = 2*np.arctan((-B+(B**2 - 4*A*C)**0.5)/(2*A))
+		theta22 = 2*np.arctan((-B-(B**2 - 4*A*C)**0.5)/(2*A))
 	
 	else:
 		config['draw']=0
@@ -72,14 +73,22 @@ def _FBM_centroid(config):
 	
 def FBM_simulations(config):
 
-	config['X7'] =  config['X5'] + config['L3']*np.cos(-1*config['theta3'])
-	config['X8'] =  config['X6'] + config['L3']*np.sin(-1*config['theta3'])
 
-	config['X1'] =  config['X7'] - config['L4']*np.cos(config['theta4'])
-	config['X2'] =  config['X8'] - config['L4']*np.sin(config['theta4'])
+	if config['stance']:
+	
+		config['X5'] =  config['X3'] + config['L2']*np.cos(config['theta2'])
+		config['X6'] =  config['X4'] + config['L2']*np.sin(config['theta2'])
+		
+		config['X7'] =  config['X5'] + config['L3']*np.cos(config['theta3'])
+		config['X8'] =  config['X6'] + config['L3']*np.sin(config['theta3'])
 
-	config['X3'] =  config['X1'] - config['L1']*np.cos(-1*config['theta1'])
-	config['X4'] =  config['X2'] - config['L1']*np.sin(-1*config['theta1'])
+	else:
+
+		config['X1'] =  config['X7'] - config['L4']*np.cos(config['theta4'])
+		config['X2'] =  config['X8'] - config['L4']*np.sin(config['theta4'])
+
+		config['X3'] =  config['X1'] - config['L1']*np.cos(config['theta1'])
+		config['X4'] =  config['X2'] - config['L1']*np.sin(config['theta1'])
 
 
 def plot(config):
@@ -100,23 +109,31 @@ def plot(config):
 	l6.pop(0).remove()
 	
 
-config = {'L1':1,'L2':3.5,'L3':3,'L4':4,
-		'theta1':np.pi/8,'theta3':np.pi/2,
-		'draw':1,'fc': 3, 'pause':0.1, 'inc_fac': 200,
-		'frames':200}
+config = {
+		'X1':13.8,'X2':-50,'X3':-13.3,'X4':-42.8,
+		'X5':np.nan,'X6':np.nan,'X7':np.nan,'X8':np.nan,
+		'L1':28.04,'L2':27.85,'L3':23.66,'L4':51.09,
+		'theta1':np.pi*-14.88/180, 'theta2':np.nan,
+		'theta3':np.pi*39.34/180, 'theta4':np.nan,
+		'stance':True,
+		'draw':1,'fc': 3, 'pause':0.01, 'inc_fac': +180,
+		'frames':120
+		}
 fig,ax = plt.subplots(1,1, figsize=(10,10))
 mx = max(config['L1'], config['L2'], config['L3'], config['L4'])
 fc = config['fc']
 plt.xlim(-fc*mx, fc*mx)
 plt.ylim(-fc*mx, fc*mx)
+centers  = []
 for i in range(config['frames']):
-	config['theta3'] += np.pi/config['inc_fac']
 	_FBM_angles(config)
 	if not config['draw']:
-		print("Error")
+		print(colored(f"Error at theta3 = %f" % config['theta3'], 'red'))
+		config['theta3'] += np.pi/config['inc_fac']
 		continue
-	config['X5'] = 0
-	config['X6'] = 0
 	FBM_simulations(config)
 	_FBM_centroid(config)
 	plot(config)
+	print("Center = ",(config['X9'], config['X10']))
+	config['theta3'] += np.pi/config['inc_fac']
+
