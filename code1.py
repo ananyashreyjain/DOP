@@ -52,6 +52,9 @@ def points_to_FBM(config):
 	config['theta2'] = np.arctan((config['X6'] - config['X4']) / (config['X5'] - config['X3']))
 	config['theta3'] = np.arctan((config['X8'] - config['X6']) / (config['X7'] - config['X5']))
 	
+	config['Xa'] = (config['X1'] + config['X3'])/2
+	config['Xb'] = (np.tan(config['theta1']) * (config['Xa']-config['X1'])) + config['X2']
+	
 	print(f"L1=%0.2f, L2=%0.2f, L3=%0.2f, L4=%0.2f \ntheta1=%0.2f, theta2=%0.2f, theta3=%0.2f"%
 	(config['L1'], config['L2'], config['L3'], config['L4'], 180/np.pi * config['theta1'], 
 	180/np.pi * config['theta2'], 180/np.pi * config['theta3']))
@@ -84,6 +87,34 @@ def _FBM_angles(config):
 		
 	config['theta2']=theta2
 	config['theta4']=theta4
+	
+	
+def heel_contact_distance(config):
+
+	pfld = lambda m, c, x1, y1: (m * x1 - y1 + c)/((m**2 + 1) ** 0.5) 
+	m1 = (config['Xllb'] - config['Xub']) / (config['Xlla'] - config['Xua'])
+	c1 = ((config['Xub'] * config['Xlla']) - (config['Xua'] * config['Xllb']))/(config['Xlla'] - config['Xua'])
+	p = pfld(m1, c1, config['X9'], config['X10'])
+	
+	m2 = -1/m1
+	c2 = config['Xllb'] - (m2 * config['Xlla'])
+	q = pfld(m2, c2, config['X9'], config['X10'])
+	
+	
+	return -1*p, q
+	
+def push_off_distance(config):
+
+	pfld = lambda m, c, x1, y1: (m * x1 - y1 + c)/((m**2 + 1) ** 0.5) 
+	m1 = (config['Xlrb'] - config['Xub']) / (config['Xlra'] - config['Xua'])
+	c1 = ((config['Xub'] * config['Xlra']) - (config['Xua'] * config['Xlrb']))/(config['Xlra'] - config['Xua'])
+	p = pfld(m1, c1, config['X9'], config['X10'])
+	
+	m2 = -1/m1
+	c2 = config['Xlrb'] - (m2 * config['Xlra'])
+	q = pfld(m2, c2, config['X9'], config['X10'])
+	
+	return -1*p, q
 		
 	
 def _FBM_centroid(config):
@@ -97,6 +128,7 @@ def _FBM_centroid(config):
 	config['X9'] = C[0]
 	config['X10'] = C[1]
 	
+	
 def FBM_simulations(config):
 
 	if config['stance']:
@@ -106,6 +138,7 @@ def FBM_simulations(config):
 		
 		config['X7'] =  config['X5'] + config['L3']*np.cos(config['theta3'])
 		config['X8'] =  config['X6'] + config['L3']*np.sin(config['theta3'])
+		
 
 	else:
 
@@ -118,14 +151,21 @@ def FBM_simulations(config):
 
 def plot(config):
 
-	l1=ax.plot([config['X1'], config['X3']],[config['X2'], config['X4']],linestyle='-', marker='x', color='b',label='l1')
-	l2=ax.plot([config['X3'], config['X5']],[config['X4'], config['X6']],linestyle='-', marker='x', color='g',label='l2')
-	l3=ax.plot([config['X5'], config['X7']],[config['X6'], config['X8']],linestyle='-', marker='x', color='r',label='l3')
-	l4=ax.plot([config['X7'], config['X1']],[config['X8'], config['X2']],linestyle='-', marker='x', color='c',label='l4')
-	l5=ax.plot([config['X5'], config['X9']],[config['X6'], config['X10']],linestyle='--', color='k')
-	l6=ax.plot([config['X7'], config['X9']],[config['X8'], config['X10']],linestyle='--', color='k')
-	ax.legend(loc='best')
-	cp=ax.scatter(config['X9'], config['X10'], marker='.', color='k')
+	l1=ax[0].plot([config['X1'], config['X3']],[config['X2'], config['X4']],linestyle='-', marker='x', color='b',label='l1')
+	l2=ax[0].plot([config['X3'], config['X5']],[config['X4'], config['X6']],linestyle='-', marker='x', color='g',label='l2')
+	l3=ax[0].plot([config['X5'], config['X7']],[config['X6'], config['X8']],linestyle='-', marker='x', color='r',label='l3')
+	l4=ax[0].plot([config['X7'], config['X1']],[config['X8'], config['X2']],linestyle='-', marker='x', color='c',label='l4')
+	l5=ax[0].plot([config['X5'], config['X9']],[config['X6'], config['X10']],linestyle='--', color='k')
+	l6=ax[0].plot([config['X7'], config['X9']],[config['X8'], config['X10']],linestyle='--', color='k')
+	femur = ax[0].plot([config['Xua'], config['X7']],[config['Xub'], config['X8']],linestyle='-', color='b',label='femur')
+	ll1 = ax[0].plot([config['Xlla'], config['Xua']],[config['Xllb'], config['Xub']],linestyle='--', color='r',label='anterior load line')
+	ll2 = ax[0].plot([config['Xlra'], config['Xua']],[config['Xlrb'], config['Xub']],linestyle='--', color='r',label='anterior load line')
+	ax[0].legend(loc='best')
+	cp=ax[0].scatter(config['X9'], config['X10'], marker='.', color='k')
+	p1, q1 = push_off_distance(config)
+	p2, q2 = heel_contact_distance(config)
+	ax[1].scatter(i, p2/q2, marker='.', color='b')
+	ax[1].scatter(i, p1/q1, marker='.', color='k')
 	plt.pause(config['pause'])
 	l1.pop(0).remove()
 	l2.pop(0).remove()
@@ -133,27 +173,34 @@ def plot(config):
 	l4.pop(0).remove()
 	l5.pop(0).remove()
 	l6.pop(0).remove()
-	
+	femur.pop(0).remove()
+	ll1.pop(0).remove()
+	ll2.pop(0).remove()
 
 config = {
 		'X1':np.nan,'X2':np.nan,'X3':np.nan,'X4':np.nan,
 		'X5':np.nan,'X6':np.nan,'X7':np.nan,'X8':np.nan,
+		'Xa':np.nan, 'Xb': np.nan, 'Xlma':0, 'Xlmb':-500,
+		'Xlla':-50, 'Xllb':-500,'Xlra':100, 'Xlrb':-500,
+		'Xua':0, 'Xub':400,'Xe':0, 'Xf':400,
 		'L1':np.nan,'L2':np.nan,'L3':np.nan,'L4':np.nan,
 		'theta1':np.nan, 'theta2':np.nan,
 		'theta3':np.nan, 'theta4':np.nan,
 		'stance':True,
-		'draw':1,'fc': 3, 'pause':0.01, 'inc_fac': +180,
-		'frames':120, 'filename':"points.csv"
+		'draw':1,'fc': 10, 'pause':0.1, 'inc_fac': +180,
+		'frames':100, 'filename':"points.csv"
 		}
 		
 
 read_file(config)
 points_to_FBM(config)
-fig,ax = plt.subplots(1,1, figsize=(10,10))
+fig,ax = plt.subplots(1,2, figsize=(10,10))
+feet = ax[0].plot([config['Xlla'], config['Xlra']],[config['Xllb'], config['Xlrb']],linestyle='-', color='b',label='feet')
+Tibia = ax[0].plot([config['Xlma'], config['Xa']],[config['Xlmb'], config['Xb']],linestyle='-', color='b',label='Tibia')
 mx = max(config['L1'], config['L2'], config['L3'], config['L4'])
 fc = config['fc']
-plt.xlim(-fc*mx, fc*mx)
-plt.ylim(-fc*mx, fc*mx)
+ax[0].set_xlim(-fc*mx, fc*mx)
+ax[0].set_ylim(-fc*mx, fc*mx)
 
 for i in range(config['frames']):
 	_FBM_angles(config)
@@ -165,5 +212,6 @@ for i in range(config['frames']):
 	_FBM_centroid(config)
 	plot(config)
 	print("Center = ",(config['X9'], config['X10']))
+	print("Knee Center = ", (config['X7'], config['X8']), "\n")
 	config['theta3'] += np.pi/config['inc_fac']
 
