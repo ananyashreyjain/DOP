@@ -2,35 +2,6 @@ import numpy as np
 from termcolor import colored
 import matplotlib.pyplot as plt
 import pandas as pd
-
-def knee_center():
-
-	c1 = 0.0791
-	c2 = 5.733E-4
-	c3 = 7.682E-6
-	c4 = 5.759E-8
-
-	c5 = 0.3695
-	c6 = 2.958E-3
-	c7 = 7.666E-6
-
-	c8 = -0.0683
-	c9 = 8.804E-4
-	c10 = 3.750E-6
-
-	c11 = -0.1283
-	c12 = 4.796E-4
-
-	for Beta in range(0, 120):
-
-		Varus = (c1 * Beta) - (c2 * Beta**2) - (c3 * Beta**3) + (c4 * Beta**4)
-		IntRot = (c5 * Beta) - (c6 * Beta**2) + (c7 * Beta**3)
-		ydist = (c8 * Beta) + (c9 * Beta**2) - (c10 * Beta**3)
-		zdist = (c11 * Beta) + (c12 * Beta**2)
-
-		X1 = -60
-		Y1 = -np.sin(Varus) * X1 + ydist
-		Z1 = np.cos(Varus) * np.sin(IntRot) * X1 + zdist
 		
 def read_file(config):
 
@@ -48,25 +19,26 @@ def Grashof_criterion(config):
 	sum1=p[0]+p[3]
 	sum2=p[1]+p[2]
 	    
-	if ((sum1<sum2) and p(1)==l1):
+	if ((sum1<sum2) and p[1]==config['L1']):
 		Type='Grashoff class-I Double Crank Mechanism'
-	elif (((sum1<sum2) and p(1)==l2) | ((sum1<sum2) and p(1)==l4)):
+	elif (((sum1<sum2) and p[1]==config['L2']) | ((sum1<sum2) and p[1]==config['L4'])):
 		Type='Grashoff class-I Crank Rocker Mechanism'
-	elif ((sum1<sum2) and p(1)==l3):
+	elif ((sum1<sum2) and p[1]==config['L3']):
 		Type='Grashoff class-I Double Rocker Mechanism'
-	elif ((sum1<sum2) and p(1)==l4):
+	elif ((sum1<sum2) and p[1]==config['L4']):
 		Type='Grashoff class-I Rocker Crank Mechanism'
 	elif (sum1>sum2):
 		Type='Grashoff class-II Triple Rocker Mechanism'
-	elif (sum1==sum2 and p(1)==l1 ):
+	elif (sum1==sum2 and p[1]==config['L1'] ):
 		Type='Grashoff class-III Double Crank Mechanism'
-	elif (sum1==sum2 and p(1)==l2 or ((sum1==sum2) and p(1)==l4 )):
+	elif (sum1==sum2 and p[1]==config['L2'] or ((sum1==sum2) and p[1]==config['L4'] )):
 		Type='Grashoff class-III Crank Rocker Mechanism'
-	elif (sum1==sum2 and p(1)==l3 ):
+	elif (sum1==sum2 and p[1]==config['L3'] ):
 		Type='Grashoff class-III(Deltoid Linkage) Double Rocker Mechanism'
-	elif (sum1==sum2 and (l1==l2==l3==l4)):
+	elif (sum1==sum2 and (config['L1']==config['L2']==config['L3']==config['L4'])):
 		Type='Square with triple change point';
-	elif (sum1==sum2 and (l1+l2==l3+l4) or ((sum1==sum2) and l2+l3==l1+l4 )):
+	elif (sum1==sum2 and (config['L1']+config['L2']==config['L3']+config['L4']) or
+	 ((sum1==sum2) and config['L2']+config['L3']==config['L1']+config['L4'] )):
 		Type='Grashoff class-III Crank Rocker Mechanism'
 	else:
 		Type='Link lengths are incorrect.Check input'
