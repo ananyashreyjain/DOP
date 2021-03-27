@@ -60,9 +60,9 @@ def points_to_FBM(config):
 	config['Xa'] = (config['X1'] + config['X3'])/2
 	config['Xb'] = (np.tan(config['theta1']) * (config['Xa']-config['X1'])) + config['X2']
 	
-	print(f"L1=%0.2f, L2=%0.2f, L3=%0.2f, L4=%0.2f \ntheta1=%0.2f, theta2=%0.2f, theta3=%0.2f"%
-	(config['L1'], config['L2'], config['L3'], config['L4'], 180/np.pi * config['theta1'], 
-	180/np.pi * config['theta2'], 180/np.pi * config['theta3']))
+	#print(f"L1=%0.2f, L2=%0.2f, L3=%0.2f, L4=%0.2f \ntheta1=%0.2f, theta2=%0.2f, theta3=%0.2f"%
+	#(config['L1'], config['L2'], config['L3'], config['L4'], 180/np.pi * config['theta1'], 
+	#180/np.pi * config['theta2'], 180/np.pi * config['theta3']))
 
 	
 def _FBM_angles(config):
@@ -191,10 +191,15 @@ def plot(config, i):
 	ll2 = ax[0].plot([config['Xlra'], config['Xua']],[config['Xlrb'], config['Xub']],linestyle='--', color='r',label='anterior load line')
 	ax[0].legend(loc='best')
 	cp=ax[0].scatter(config['X9'], config['X10'], marker='.', color='k')
+	ax[0].set_title(f"L1=%fmm, L2=%fmm, L3=%fmm, L4=%fmm \ntheta1=%fdeg, theta2=%fdeg, theta3=%fdeg"
+	%(config['L1'],config['L2'],config['L3'],config['L4'],
+	config['theta1']*180/np.pi,config['theta2']*180/np.pi,config['theta3']*180/np.pi))
 	p1, q1 = push_off_distance(config)
 	p2, q2 = heel_contact(config)
 	ax[1].scatter(i, p2/q2, marker='.', color='b')
 	ax[1].scatter(i, p1/q1, marker='.', color='k')
+	ax[1].set_title("HC(p)=%f, HC(q)=%f, HC(p/q)=%f \nPO(p)=%f, PO(q)=%f, PO(p/q)=%f"
+	% (p2, q2, p2/q2, p1, q1, p1/q1))
 	ax[1].plot([0, i+1], [0, 0], color='k')
 	plt.pause(config['pause'])
 	l1.pop(0).remove()
@@ -229,8 +234,8 @@ config = {
 read_file(config)
 points_to_FBM(config)
 Type = Grashof_criterion(config)
-print(colored(Type, 'blue'))
 fig,ax = plt.subplots(1,2, figsize=(15,10))
+fig.canvas.set_window_title(f"Four Bar Animation - %s"% Type)
 feet = ax[0].plot([config['Xlla'], config['Xlra']],[config['Xllb'], config['Xlrb']],linestyle='-', color='b',label='feet')
 Tibia = ax[0].plot([config['Xlma'], config['Xa']],[config['Xlmb'], config['Xb']],linestyle='-', color='b',label='Tibia')
 mx = max(config['L1'], config['L2'], config['L3'], config['L4'])
