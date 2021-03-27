@@ -178,9 +178,13 @@ def FBM_simulations(config):
 		config['X4'] =  config['X2'] - config['L1']*np.sin(config['theta1'])
 
 
-def plot(config, i, finish=False):
+def plot(config, i, ax=None, finish=False):
 
 
+	p1, q1 = push_off_distance(config)
+	p2, q2 = heel_contact(config)
+	if not config['plot']:
+		return p2/q2, p1/q1
 	l1=ax[0].plot([config['X1'], config['X3']],[config['X2'], config['X4']],linestyle='-', marker='x', color='b',label='l1')
 	l2=ax[0].plot([config['X3'], config['X5']],[config['X4'], config['X6']],linestyle='-', marker='x', color='g',label='l2')
 	l3=ax[0].plot([config['X5'], config['X7']],[config['X6'], config['X8']],linestyle='-', marker='x', color='r',label='l3')
@@ -196,8 +200,6 @@ def plot(config, i, finish=False):
 	ax[0].set_title(f"L1=%fmm, L2=%fmm, L3=%fmm, L4=%fmm \ntheta1=%fdeg, theta2=%fdeg, theta3=%fdeg"
 	%(config['L1'],config['L2'],config['L3'],config['L4'],
 	config['theta1']*180/np.pi,config['theta2']*180/np.pi,config['theta3']*180/np.pi))
-	p1, q1 = push_off_distance(config)
-	p2, q2 = heel_contact(config)
 	ax[1].scatter(i, p2/q2, marker='.', color='b')
 	ax[1].scatter(i, p1/q1, marker='.', color='k')
 	ax[1].set_title("HC(p)=%fmm, HC(q)=%fmm, HC(p/q)=%f \nPO(p)=%fmm, PO(q)=%fmm, PO(p/q)=%f"
@@ -205,7 +207,7 @@ def plot(config, i, finish=False):
 	ax[1].plot([i, i+1], [0, 0],linestyle='--', color='k')
 	if finish:
 		plt.pause(config['wait at end'])
-		return 
+		return p2/q2, p1/q1
 	plt.pause(config['pause'])
 	l1.pop(0).remove()
 	l2.pop(0).remove()
@@ -217,11 +219,13 @@ def plot(config, i, finish=False):
 	ll1.pop(0).remove()
 	ll2.pop(0).remove()
 	ll3.pop(0).remove()
+	return p2/q2, p1/q1
 
 config = {
 		'X1':np.nan,'X2':np.nan,'X3':np.nan,'X4':np.nan,
 		'X5':np.nan,'X6':np.nan,'X7':np.nan,'X8':np.nan,
 		'Xa':np.nan, 'Xb': np.nan, 'Xlma':0, 'Xlmb':-500,
+		'X9':np.nan, 'X10': np.nan,
 		'Xlla':-50, 'Xllb':-500,'Xlra':200, 'Xlrb':-500,
 		'Xua':0, 'Xub':400,'Xe':0, 'Xf':400,
 		'def_Xlla':-50, 'def_Xllb':-500,
@@ -233,37 +237,91 @@ config = {
 		'theta3':np.nan, 'theta4':np.nan,
 		'def_theta3':np.nan, 'stance':True,
 		'draw':1,'fc': 10, 'pause':.2, 'inc_fac': +180,
-		'frames':40, 'filename':"points.csv", 
-		'wait at end': 100
+		'frames':10, 'filename':"points.csv", 
+		'wait at end': 100, 'plot':False, 'readfile':False,
+		'learn': True
 		}
-		
 
-read_file(config)
-points_to_FBM(config)
-Type = Grashof_criterion(config)
-fig,ax = plt.subplots(1,2, figsize=(15,10))
-fig.canvas.set_window_title(f"Four Bar Animation - %s"% Type)
-feet = ax[0].plot([config['Xlla'], config['Xlra']],[config['Xllb'], config['Xlrb']],linestyle='-', color='orange',label='feet')
-Tibia = ax[0].plot([config['Xlma'], config['Xa']],[config['Xlmb'], config['Xb']],linestyle='-', color='y',label='Tibia')
-mx = max(config['L1'], config['L2'], config['L3'], config['L4'])
-fc = config['fc']
-ax[0].set_xlim(-fc*mx, fc*mx)
-ax[0].set_ylim(-fc*mx, fc*mx)
-ax[1].scatter(None, None, marker='.', color='b', label='Heel Contact')
-ax[1].scatter(None, None, marker='.', color='k', label='Push Off')
-ax[1].legend(loc='best')
+config_constt = dict(config)
 
-for i in range(config['frames']):
-	_FBM_angles(config)
-	if not config['draw']:
-		print(colored(f"Error at theta3 = %f" % config['theta3'], 'red'))
+def simulate(config, ax=None):
+	hcr = []
+	por = []
+	for i in range(config['frames']):
+		_FBM_angles(config)
+		if not config['draw']:
+			#print(colored(f"Error at theta3 = %f" % config['theta3'], 'red'))
+			config['theta3'] += np.pi/config['inc_fac']
+			return None, None
+		FBM_simulations(config)
+		_FBM_centroid(config)
+		t1, t2 = plot(config, i, ax, False)
+		hcr.append(t1)
+		por.append(t2)
+		#print("Center = ",(config['X9'], config['X10']))
+		#print("Knee Center = ", (config['X7'], config['X8']), "\n")
 		config['theta3'] += np.pi/config['inc_fac']
-		continue
-	FBM_simulations(config)
-	_FBM_centroid(config)
-	plot(config, i)
-	#print("Center = ",(config['X9'], config['X10']))
-	#print("Knee Center = ", (config['X7'], config['X8']), "\n")
-	config['theta3'] += np.pi/config['inc_fac']
+	return hcr, por
+	
+def learn(config):
 
-plot(config, config['frames'], True)
+	best_config = None
+	temp_config = None
+	min_sum = 1e9 
+	for l1 in range(20, 60):
+		for l2 in range(20, 60):
+			for l3 in range(20, 30):
+				for l4 in range(20, 60):
+					if ((l3+l4) - (l1+l2)) <= 0:
+						config = dict(config_constt)
+						config['theta1'] = 0
+						config['theta3'] = 0
+						config['def_theta3'] = 0
+						config['X3'] = float(l1)/-2
+						config['X4'] = 0
+						config['X1'] = float(l1)/2
+						config['X2'] = 0
+						config['L1'] = float(l1)
+						config['L2'] = float(l2)
+						config['L3'] = float(l3)
+						config['L4'] = float(l4)
+						temp_config = dict(config)
+						hcr, pcr = None, None
+						try:
+							hcr, por = simulate(config, None)
+						except Exception as e:
+							continue
+							pass
+						if(hcr == None or por == None):
+							continue
+						elif min_sum > 0.6*sum(hcr)-0.4*sum(por):
+							min_sum = 0.6*sum(hcr)-0.4*sum(por)
+							best_config = dict(temp_config)
+							
+	return best_config
+
+def initialize(config):
+	if config['readfile']:
+		read_file(config)
+		points_to_FBM(config)
+	if not config['plot']:
+		return
+	Type = Grashof_criterion(config)
+	fig,ax = plt.subplots(1,2, figsize=(15,10))
+	fig.canvas.set_window_title(f"Four Bar Animation - %s"% Type)
+	feet = ax[0].plot([config['Xlla'], config['Xlra']],[config['Xllb'], config['Xlrb']],linestyle='-', color='orange',label='feet')
+	Tibia = ax[0].plot([config['Xlma'], config['Xa']],[config['Xlmb'], config['Xb']],linestyle='-', color='y',label='Tibia')
+	#mx = max(config['L1'], config['L2'], config['L3'], config['L4'])
+	#fc = config['fc']
+	#ax[0].set_xlim(-fc*mx, fc*mx)
+	#ax[0].set_ylim(-fc*mx, fc*mx)
+	ax[1].scatter(None, None, marker='.', color='b', label='Heel Contact')
+	ax[1].scatter(None, None, marker='.', color='k', label='Push Off')
+	ax[1].legend(loc='best')
+	return ax
+
+config = dict(learn(config))
+config['plot']=True
+ax = initialize(config)
+simulate(config, ax)
+plot(config, config['frames'], ax, True)
