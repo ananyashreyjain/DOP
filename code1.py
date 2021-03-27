@@ -178,7 +178,8 @@ def FBM_simulations(config):
 		config['X4'] =  config['X2'] - config['L1']*np.sin(config['theta1'])
 
 
-def plot(config, i):
+def plot(config, i, finish=False):
+
 
 	l1=ax[0].plot([config['X1'], config['X3']],[config['X2'], config['X4']],linestyle='-', marker='x', color='b',label='l1')
 	l2=ax[0].plot([config['X3'], config['X5']],[config['X4'], config['X6']],linestyle='-', marker='x', color='g',label='l2')
@@ -201,6 +202,9 @@ def plot(config, i):
 	ax[1].set_title("HC(p)=%f, HC(q)=%f, HC(p/q)=%f \nPO(p)=%f, PO(q)=%f, PO(p/q)=%f"
 	% (p2, q2, p2/q2, p1, q1, p1/q1))
 	ax[1].plot([0, i+1], [0, 0], color='k')
+	if finish:
+		plt.pause(config['wait at end'])
+		return 
 	plt.pause(config['pause'])
 	l1.pop(0).remove()
 	l2.pop(0).remove()
@@ -227,7 +231,8 @@ config = {
 		'theta3':np.nan, 'theta4':np.nan,
 		'def_theta3':np.nan, 'stance':True,
 		'draw':1,'fc': 10, 'pause':.2, 'inc_fac': +180,
-		'frames':40, 'filename':"points.csv"
+		'frames':40, 'filename':"points.csv", 
+		'wait at end': 100
 		}
 		
 
@@ -259,3 +264,4 @@ for i in range(config['frames']):
 	#print("Knee Center = ", (config['X7'], config['X8']), "\n")
 	config['theta3'] += np.pi/config['inc_fac']
 
+plot(config, config['frames'], True)
