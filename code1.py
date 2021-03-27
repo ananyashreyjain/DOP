@@ -187,9 +187,10 @@ def plot(config, i, finish=False):
 	l4=ax[0].plot([config['X7'], config['X1']],[config['X8'], config['X2']],linestyle='-', marker='x', color='c',label='l4')
 	l5=ax[0].plot([config['X5'], config['X9']],[config['X6'], config['X10']],linestyle='--', color='k')
 	l6=ax[0].plot([config['X7'], config['X9']],[config['X8'], config['X10']],linestyle='--', color='k')
-	femur = ax[0].plot([config['Xua'], config['X7']],[config['Xub'], config['X8']],linestyle='-', color='b',label='femur')
-	ll1 = ax[0].plot([config['Xlla'], config['Xua']],[config['Xllb'], config['Xub']],linestyle='--', color='r',label='anterior load line')
-	ll2 = ax[0].plot([config['Xlra'], config['Xua']],[config['Xlrb'], config['Xub']],linestyle='--', color='r',label='anterior load line')
+	femur = ax[0].plot([config['Xua'], config['X7']],[config['Xub'], config['X8']],linestyle='-', color='y',label='femur')
+	ll1 = ax[0].plot([config['Xlla'], config['Xua']],[config['Xllb'], config['Xub']],linestyle='--', color='b',label='posterior load line')
+	ll2 = ax[0].plot([config['Xlra'], config['Xua']],[config['Xlrb'], config['Xub']],linestyle='--', color='k',label='anterior load line')
+	ll3 = ax[0].plot([config['Xlra'], config['Xlla']],[config['Xlrb'], config['Xllb']],linestyle='--', color='orange',label='Floor')
 	ax[0].legend(loc='best')
 	cp=ax[0].scatter(config['X9'], config['X10'], marker='.', color='k')
 	ax[0].set_title(f"L1=%fmm, L2=%fmm, L3=%fmm, L4=%fmm \ntheta1=%fdeg, theta2=%fdeg, theta3=%fdeg"
@@ -199,9 +200,9 @@ def plot(config, i, finish=False):
 	p2, q2 = heel_contact(config)
 	ax[1].scatter(i, p2/q2, marker='.', color='b')
 	ax[1].scatter(i, p1/q1, marker='.', color='k')
-	ax[1].set_title("HC(p)=%f, HC(q)=%f, HC(p/q)=%f \nPO(p)=%f, PO(q)=%f, PO(p/q)=%f"
+	ax[1].set_title("HC(p)=%fmm, HC(q)=%fmm, HC(p/q)=%f \nPO(p)=%fmm, PO(q)=%fmm, PO(p/q)=%f"
 	% (p2, q2, p2/q2, p1, q1, p1/q1))
-	ax[1].plot([0, i+1], [0, 0], color='k')
+	ax[1].plot([i, i+1], [0, 0],linestyle='--', color='k')
 	if finish:
 		plt.pause(config['wait at end'])
 		return 
@@ -215,6 +216,7 @@ def plot(config, i, finish=False):
 	femur.pop(0).remove()
 	ll1.pop(0).remove()
 	ll2.pop(0).remove()
+	ll3.pop(0).remove()
 
 config = {
 		'X1':np.nan,'X2':np.nan,'X3':np.nan,'X4':np.nan,
@@ -241,8 +243,8 @@ points_to_FBM(config)
 Type = Grashof_criterion(config)
 fig,ax = plt.subplots(1,2, figsize=(15,10))
 fig.canvas.set_window_title(f"Four Bar Animation - %s"% Type)
-feet = ax[0].plot([config['Xlla'], config['Xlra']],[config['Xllb'], config['Xlrb']],linestyle='-', color='b',label='feet')
-Tibia = ax[0].plot([config['Xlma'], config['Xa']],[config['Xlmb'], config['Xb']],linestyle='-', color='b',label='Tibia')
+feet = ax[0].plot([config['Xlla'], config['Xlra']],[config['Xllb'], config['Xlrb']],linestyle='-', color='orange',label='feet')
+Tibia = ax[0].plot([config['Xlma'], config['Xa']],[config['Xlmb'], config['Xb']],linestyle='-', color='y',label='Tibia')
 mx = max(config['L1'], config['L2'], config['L3'], config['L4'])
 fc = config['fc']
 ax[0].set_xlim(-fc*mx, fc*mx)
