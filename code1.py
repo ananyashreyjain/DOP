@@ -221,29 +221,6 @@ def plot(config, i, ax=None, finish=False):
 	ll3.pop(0).remove()
 	return p2/q2, p1/q1
 
-config = {
-		'X1':np.nan,'X2':np.nan,'X3':np.nan,'X4':np.nan,
-		'X5':np.nan,'X6':np.nan,'X7':np.nan,'X8':np.nan,
-		'Xa':np.nan, 'Xb': np.nan, 'Xlma':0, 'Xlmb':-500,
-		'X9':np.nan, 'X10': np.nan,
-		'Xlla':-50, 'Xllb':-500,'Xlra':200, 'Xlrb':-500,
-		'Xua':0, 'Xub':400,'Xe':0, 'Xf':400,
-		'def_Xlla':-50, 'def_Xllb':-500,
-		'def_Xlra':200, 'def_Xlrb':-500,
-		'Xhpa':0, 'Xhpb':400,
-		'def_Xhpa':0, 'def_Xhpb':400,
-		'L1':np.nan,'L2':np.nan,'L3':np.nan,'L4':np.nan,
-		'theta1':np.nan, 'theta2':np.nan,
-		'theta3':np.nan, 'theta4':np.nan,
-		'def_theta3':np.nan, 'stance':True,
-		'draw':1,'fc': 10, 'pause':.01, 'inc_fac': +90,
-		'frames':5, 'filename':"points.csv", 
-		'wait at end': 100, 'plot':False, 'readfile':False,
-		'learn': True
-		}
-
-config_constt = dict(config)
-
 def simulate(config, ax=None):
 
 	hcr = []
@@ -264,15 +241,15 @@ def simulate(config, ax=None):
 		config['theta3'] += np.pi/config['inc_fac']
 	return hcr, por
 	
-def learn(config):
+def optimize(config):
 
-	if not config['learn']:
+	if not config['optimize']:
 		return config
 	best_config = None
 	temp_config = None
 	min_sum = 1e9
 	iterations = 0 
-	for l1 in tqdm(range(20, 60, 2)):
+	for l1 in tqdm(range(20, 60, 2), desc='optimizing'):
 		for l2 in range(20, 60, 2):
 			for l3 in range(20, 30, 2):
 				l4_max = l1+l2-l3
@@ -328,9 +305,35 @@ def initialize(config):
 	ax[1].scatter(None, None, marker='.', color='k', label='Push Off')
 	ax[1].legend(loc='best')
 	return ax
+	
+def run(config):
+	config = dict(optimize(config))
+	config['plot']=True
+	ax = initialize(config)
+	simulate(config, ax)
+	plot(config, config['frames'], ax, True)
+	
+config = {
+		'X1':np.nan,'X2':np.nan,'X3':np.nan,'X4':np.nan,
+		'X5':np.nan,'X6':np.nan,'X7':np.nan,'X8':np.nan,
+		'Xa':np.nan, 'Xb': np.nan, 'Xlma':0, 'Xlmb':-500,
+		'X9':np.nan, 'X10': np.nan,
+		'Xlla':-50, 'Xllb':-500,'Xlra':200, 'Xlrb':-500,
+		'Xua':0, 'Xub':400,'Xe':0, 'Xf':400,
+		'def_Xlla':-50, 'def_Xllb':-500,
+		'def_Xlra':200, 'def_Xlrb':-500,
+		'Xhpa':0, 'Xhpb':400,
+		'def_Xhpa':0, 'def_Xhpb':400,
+		'L1':np.nan,'L2':np.nan,'L3':np.nan,'L4':np.nan,
+		'theta1':np.nan, 'theta2':np.nan,
+		'theta3':np.nan, 'theta4':np.nan,
+		'def_theta3':np.nan, 'stance':True,
+		'draw':1,'fc': 10, 'pause':.01, 'inc_fac': +90,
+		'frames':5, 'filename':"points.csv", 
+		'wait at end': 100, 'plot':True, 'readfile':True,
+		'optimize':False
+		}
 
-config = dict(learn(config))
-config['plot']=True
-ax = initialize(config)
-simulate(config, ax)
-plot(config, config['frames'], ax, True)
+config_constt = dict(config)
+run(config)
+
