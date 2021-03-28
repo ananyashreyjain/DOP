@@ -307,6 +307,7 @@ def initialize(config):
 	return ax
 	
 def run(config):
+
 	config = dict(optimize(config))
 	config['plot']=True
 	ax = initialize(config)
