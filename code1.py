@@ -45,16 +45,16 @@ def Grashof_criterion(config):
    
 	return Type
 		
-def points_to_FBM(config):
+def points_to_FBM(config, epsilon=1e-8):
 
 	config['L1'] = ((config['X3'] - config['X1'])**2 + (config['X4'] - config['X2'])**2)**0.5
 	config['L2'] = ((config['X5'] - config['X3'])**2 + (config['X6'] - config['X4'])**2)**0.5
 	config['L3'] = ((config['X7'] - config['X5'])**2 + (config['X8'] - config['X6'])**2)**0.5
 	config['L4'] = ((config['X1'] - config['X7'])**2 + (config['X2'] - config['X8'])**2)**0.5
 
-	config['theta1'] = np.arctan((config['X2'] - config['X4']) / (config['X1'] - config['X3']))
-	config['theta2'] = np.arctan((config['X6'] - config['X4']) / (config['X5'] - config['X3']))
-	config['theta3'] = np.arctan((config['X8'] - config['X6']) / (config['X7'] - config['X5']))
+	config['theta1'] = np.arctan((config['X2'] - config['X4']) / ((config['X1'] - config['X3']) + epsilon))
+	config['theta2'] = np.arctan((config['X6'] - config['X4']) / ((config['X5'] - config['X3']) + epsilon))
+	config['theta3'] = np.arctan((config['X8'] - config['X6']) / ((config['X7'] - config['X5']) + epsilon))
 	config['def_theta3'] = config['theta3']
 	
 	config['Xa'] = (config['X1'] + config['X3'])/2
@@ -180,7 +180,6 @@ def FBM_simulations(config):
 
 def plot(config, i, ax=None, finish=False):
 
-
 	p1, q1 = push_off_distance(config)
 	p2, q2 = heel_contact(config)
 	if not config['plot']:
@@ -238,13 +237,14 @@ config = {
 		'def_theta3':np.nan, 'stance':True,
 		'draw':1,'fc': 10, 'pause':.2, 'inc_fac': +180,
 		'frames':10, 'filename':"points.csv", 
-		'wait at end': 100, 'plot':False, 'readfile':False,
-		'learn': True
+		'wait at end': 100, 'plot':True, 'readfile':True,
+		'learn': False
 		}
 
 config_constt = dict(config)
 
 def simulate(config, ax=None):
+
 	hcr = []
 	por = []
 	for i in range(config['frames']):
@@ -265,6 +265,8 @@ def simulate(config, ax=None):
 	
 def learn(config):
 
+	if not config['learn']:
+		return config
 	best_config = None
 	temp_config = None
 	min_sum = 1e9 
@@ -301,6 +303,7 @@ def learn(config):
 	return best_config
 
 def initialize(config):
+
 	if config['readfile']:
 		read_file(config)
 		points_to_FBM(config)
