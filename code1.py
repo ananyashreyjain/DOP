@@ -7,8 +7,8 @@ from tqdm import tqdm
 		
 def read_file(config):
 
-	FBM_type = int(input("Enter type number 0 - 6 \n"))
 	df = pd.read_csv(config['filename'], header = None)
+	FBM_type = int(input(f"Enter type number 0 - %d \n" % (df.shape[0]-1)))
 	co_ordinates = 	df.iloc[FBM_type,:]
 	co_ordinates = [float(point) for point in co_ordinates]
 	for number, point in enumerate(co_ordinates):
@@ -251,8 +251,9 @@ def simulate(config, ax=None):
 	
 def optimize(config):
 
+	fbm_array = np.empty((0,9), dtype=np.float)
 	if not config['optimize']:
-		return config
+		return fbm_array, config
 	best_config = None
 	temp_config = None
 	min_sum = 1e9
@@ -290,17 +291,21 @@ def optimize(config):
 						pos_sum = 0
 						neg_sum = 0
 						for no, index in enumerate(range((len(hcr)))):
-							factor = max(1 - 0.25 * no, 0)
+							factor = max(1 - config['reduction'] * no, 0)
 							pos_sum += factor*hcr[index] if hcr[index]>0 else 0
 							neg_sum += factor*por[index] if por[index]<0 else 0
-						if min_sum > 0.50*pos_sum - 0.50*neg_sum:
-							min_sum = 0.50*pos_sum - 0.55*neg_sum
+						a, b = config['alpha'], config['beta']
+						cur_min_sum = a*pos_sum - b*neg_sum
+						fbm_array = np.concatenate((fbm_array, np.array([[cur_min_sum,
+						temp_config['X1'], temp_config['X2'], temp_config['X3'], temp_config['X4'], 
+						temp_config['X5'], temp_config['X6'], temp_config['X7'], temp_config['X8']]])))
+						if min_sum > cur_min_sum:
+							min_sum = cur_min_sum
 							best_config = temp_config.copy()
 	
 	best_config['plot'] = True	
-	best_config['frames'] = best_config['frames_new']
-	best_config['inc_fac'] = best_config['inc_fac_new']		
-	return best_config
+	fbm_array = np.array(sorted(fbm_array, key = lambda x: x[0]))[0:best_config['store'], 1:]
+	return fbm_array, best_config
 
 def initialize(config):
 
@@ -329,10 +334,13 @@ def initialize(config):
 	
 def run(config):
 
-	config = dict(optimize(config))
+	fbm_array, temp_config = optimize(config)
+	config = dict(temp_config)
 	if config['optimize']:
-		print(config['X1'], config['X2'], config['X3'], config['X4'], config['X5'],
-		config['X6'], config['X7'], config['X8'])
+		df = pd.DataFrame(fbm_array)
+		df.to_csv(config['wfile'], index=False, header=None)
+	config['frames'] = config['frames_new']
+	config['inc_fac'] = config['inc_fac_new']
 	ax = initialize(config)
 	simulate(config, ax)
 	plot(config, config['frames'], ax, True)
@@ -352,11 +360,12 @@ config = {
 		'theta1':np.nan, 'theta2':np.nan,
 		'theta3':np.nan, 'theta4':np.nan,
 		'def_theta3':np.nan, 'stance':True, 'swing': False,
-		'draw':1,'fc': 10, 'pause':0.1, 'inc_fac': +180,
-		'frames':10, 'filename':"points.txt", 
+		'draw':1,'fc': 10, 'pause':0.1, 'inc_fac': +90,
+		'frames':5, 'filename':"best_fbm.txt", 
 		'wait at end': 100, 'plot':True, 'readfile':True,
 		'optimize':False, 'len_inc':2, 'frames_new': 10,
-		'inc_fac_new': +180
+		'inc_fac_new': +180, 'wfile': "best_fbm.txt",
+		'store': 10, 'alpha':0.6, 'beta': 0.4, 'reduction':0.15
 		}
 
 config_constt = dict(config)
