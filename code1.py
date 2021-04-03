@@ -57,17 +57,16 @@ def points_to_FBM(config, epsilon=1e-8):
 	config['theta2'] = np.arctan((config['X6'] - config['X4']) / ((config['X5'] - config['X3']) + epsilon))
 	config['theta3'] = np.arctan((config['X8'] - config['X6']) / ((config['X7'] - config['X5']) + epsilon))
 	config['def_theta3'] = config['theta3']
-	
-	
-	#print(f"L1=%0.2f, L2=%0.2f, L3=%0.2f, L4=%0.2f \ntheta1=%0.2f, theta2=%0.2f, theta3=%0.2f"%
-	#(config['L1'], config['L2'], config['L3'], config['L4'], 180/np.pi * config['theta1'], 
-	#180/np.pi * config['theta2'], 180/np.pi * config['theta3']))
+
+	print(f"L1=%0.2f, L2=%0.2f, L3=%0.2f, L4=%0.2f \ntheta1=%0.2f, theta2=%0.2f, theta3=%0.2f"%
+	(config['L1'], config['L2'], config['L3'], config['L4'], 180/np.pi * config['theta1'], 
+	180/np.pi * config['theta2'], 180/np.pi * config['theta3']))
 
 	
 def _FBM_angles(config, epsilon=1e-8):
 
 	L1, L2, L3, L4, theta1, theta3 = config['L1'],config['L2'],\
-	 config['L3'],config['L4'],config['theta1'], config['theta3']
+	 config['L3'],config['L4'],config['theta1'],config['theta3']
 
 	K = (L1**2 + L2**2 + L3**2 - L4**2)/2
 	A = K - L2*L3*np.cos(theta3) + L1*L2*np.cos(theta1) - L1*L3*np.cos(theta1-theta3)
@@ -75,22 +74,16 @@ def _FBM_angles(config, epsilon=1e-8):
 	C = K + L2*L3*np.cos(theta3) - L1*L2*np.cos(theta1) - L1*L3*np.cos(theta1-theta3)
 	
 	if (B**2 - 4*A*C)>=0:
-		theta21 = 2*np.arctan((-B+(B**2 - 4*A*C)**0.5)/(2*A + epsilon))
-		#theta22 = 2*np.arctan((-B-(B**2 - 4*A*C)**0.5)/(2*A + epsilon))
-	
+		theta2 = 2*np.arctan((-B+(B**2 - 4*A*C)**0.5)/(2*A + epsilon))
+		if theta2<0:
+			config['draw']=0
+			return config
+			
 	else:
 		config['draw']=0
 		return config
-	
-	if -1<=((L2*np.sin(theta21)+ L3*np.sin(theta3) - L1*np.sin(theta1))/L4)<=1:
-		theta4 = np.arcsin((L2*np.sin(theta21)+ L3*np.sin(theta3) - L1*np.sin(theta1))/L4)
-		theta2 = theta21
-	else:
-		theta4 = np.arcsin((L2*np.sin(theta22)+ L3*np.sin(theta3) - L1*np.sin(theta1))/L4)
-		theta2 = theta22
 		
-	config['theta2']=theta2
-	config['theta4']=theta4
+	config['theta2'] = theta2
 	
 	
 def push_off_distance(config):
@@ -157,25 +150,39 @@ def _FBM_centroid(config):
 	config['X10'] = C[1]
 	
 	
-def FBM_simulations(config):
+def FBM_simulations(config, optimizer=False):
 
-	if not config['stance']:
+	if config['swing']:
 		config['X1'] =  config['X7'] - config['L4']*np.cos(config['theta4'])
 		config['X2'] =  config['X8'] - config['L4']*np.sin(config['theta4'])
-	
-	config['X3'] =  config['X1'] - config['L1']*np.cos(config['theta1'])
-	config['X4'] =  config['X2'] - config['L1']*np.sin(config['theta1'])
+		
+		config['X3'] =  config['X1'] - config['L1']*np.cos(config['theta1'])
+		config['X4'] =  config['X2'] - config['L1']*np.sin(config['theta1'])
 
-	config['X5'] =  config['X3'] + config['L2']*np.cos(config['theta2'])
-	config['X6'] =  config['X4'] + config['L2']*np.sin(config['theta2'])
 
-	config['Xa'] = (config['X1'] + config['X3'])/2
-	config['Xb'] = (np.tan(config['theta1']) * (config['Xa']-config['X1'])) + config['X2']
-	
-	if config['stance']:
+	if config['stance'] and not optimizer:
+		config['X5'] =  config['X3'] + config['L2']*np.cos(config['theta2'])
+		config['X6'] =  config['X4'] + config['L2']*np.sin(config['theta2'])
+
 		config['X7'] =  config['X5'] + config['L3']*np.cos(config['theta3'])
 		config['X8'] =  config['X6'] + config['L3']*np.sin(config['theta3'])
-
+	
+	if optimizer:
+		config['X5'] =  config['X7'] - config['L3']*np.cos(config['theta3'])
+		config['X6'] =  config['X8'] - config['L3']*np.sin(config['theta3'])
+		config['X3'] =  config['X5'] - config['L2']*np.cos(config['theta2'])
+		config['X4'] =  config['X6'] - config['L2']*np.sin(config['theta2'])
+		config['X1'] =  config['X3'] + config['L1']*np.cos(config['theta1'])
+		config['X2'] =  config['X4'] + config['L1']*np.sin(config['theta1'])
+		config['Xa'] = (config['X1'] + config['X3'])/2
+		config['Xb'] = (config['X2'] + config['X4'])/2
+		config['def_Xlma'] = config['Xlma'] = config['Xlma'] + config['Xa']
+		config['def_Xlla'] = config['Xlla'] = config['Xlla'] + config['Xa']
+		config['def_Xlra'] = config['Xlra'] = config['Xlra'] + config['Xa']
+		
+	config['Xa'] = (config['X1'] + config['X3'])/2
+	config['Xb'] = (config['X2'] + config['X4'])/2
+		
 
 def plot(config, i, ax=None, finish=False):
 
@@ -189,7 +196,8 @@ def plot(config, i, ax=None, finish=False):
 	l4=ax[0].plot([config['X7'], config['X1']],[config['X8'], config['X2']],linestyle='-', marker='x', color='c',label='l4')
 	l5=ax[0].plot([config['X5'], config['X9']],[config['X6'], config['X10']],linestyle='--', color='k')
 	l6=ax[0].plot([config['X7'], config['X9']],[config['X8'], config['X10']],linestyle='--', color='k')
-	femur = ax[0].plot([config['Xua'], config['X7']],[config['Xub'], config['X8']],linestyle='-', color='y',label='femur')
+	femur = ax[0].plot([config['Xua'], (config['X7'] + config['X5'])/2],[config['Xub'], (config['X6'] + config['X8'])/2],
+	linestyle='-', color='y',label='femur')
 	tibia = ax[0].plot([config['Xlma'], config['Xa']],[config['Xlmb'], config['Xb']],linestyle='-', color='y',label='Tibia')
 	ll1 = ax[0].plot([config['Xlla'], config['Xua']],[config['Xllb'], config['Xub']],linestyle='--', color='b',label='posterior load line')
 	ll2 = ax[0].plot([config['Xlra'], config['Xua']],[config['Xlrb'], config['Xub']],linestyle='--', color='k',label='anterior load line')
@@ -229,7 +237,6 @@ def simulate(config, ax=None):
 		_FBM_angles(config)
 		if not config['draw']:
 			#print(colored(f"Error at theta3 = %f" % config['theta3'], 'red'))
-			config['theta3'] += np.pi/config['inc_fac']
 			return None, None
 		FBM_simulations(config)
 		_FBM_centroid(config)
@@ -249,23 +256,27 @@ def optimize(config):
 	temp_config = None
 	min_sum = 1e9
 	iterations = 0 
-	for l1 in tqdm(range(20, 60, 2), desc='optimizing'):
-		for l2 in range(20, 60, 2):
-			for l3 in range(20, 30, 2):
+	for l1 in tqdm(range(20, 60, config['len_inc']), desc='optimizing'):
+		for l2 in range(20, 60, config['len_inc']):
+			for l3 in range(20, 30, config['len_inc']):
 				l4_max = l1+l2-l3
-				for l4 in range(20, min(l4_max,60), 2):
-					for theta1 in range(0, 10, 10):
+				for l4 in range(20, min(l4_max,60), config['len_inc']):
+					for theta1 in range(0, 20, 10):
 						iterations += 1
 						config = dict(config_constt)
 						config['theta1'] = theta1*np.pi/180
-						config['theta3'] = 0
-						config['def_theta3'] = 0
-						config['X1'] = float(l1)/2
-						config['X2'] = 0
+						config['theta3'] = 0.0*np.pi/180
+						config['def_theta3'] = config['theta3']
+						config['X7'] = 0.0
+						config['X8'] = 0.0
 						config['L1'] = float(l1)
 						config['L2'] = float(l2)
 						config['L3'] = float(l3)
 						config['L4'] = float(l4)
+						_FBM_angles(config)
+						if config['draw'] == 0:
+							continue
+						FBM_simulations(config, optimizer=True)
 						temp_config = config.copy()
 						hcr, pcr = None, None
 						try:
@@ -277,13 +288,17 @@ def optimize(config):
 							continue
 						pos_sum = 0
 						neg_sum = 0
-						for index in range(len(hcr)):
-							pos_sum += hcr[index] if hcr[index]>0 else 0
-							neg_sum += por[index] if por[index]<0 else 0
-						if min_sum > 0.6*pos_sum - 0.4*neg_sum:
-							min_sum = 0.6*pos_sum - 0.4*neg_sum
+						for no, index in enumerate(range((len(hcr)))):
+							factor = max(1 - 0.25 * no, 0)
+							pos_sum += factor*hcr[index] if hcr[index]>0 else 0
+							neg_sum += factor*por[index] if por[index]<0 else 0
+						if min_sum > 0.50*pos_sum - 0.50*neg_sum:
+							min_sum = 0.50*pos_sum - 0.55*neg_sum
 							best_config = temp_config.copy()
-							
+	
+	best_config['plot'] = True	
+	best_config['frames'] = best_config['frames_new']
+	best_config['inc_fac'] = best_config['inc_fac_new']		
 	return best_config
 
 def initialize(config):
@@ -297,10 +312,10 @@ def initialize(config):
 	fig,ax = plt.subplots(1,2, figsize=(15,10))
 	fig.canvas.set_window_title(f"Four Bar Animation - %s"% Type)
 	feet = ax[0].plot([config['Xlla'], config['Xlra']],[config['Xllb'], config['Xlrb']],linestyle='-', color='orange',label='feet')
-	#mx = max(config['L1'], config['L2'], config['L3'], config['L4'])
-	#fc = config['fc']
-	#ax[0].set_xlim(-fc*mx, fc*mx)
-	#ax[0].set_ylim(-fc*mx, fc*mx)
+	mx = max(config['L1'], config['L2'], config['L3'], config['L4'])
+	fc = config['fc']
+	ax[0].set_xlim(-fc*mx, fc*mx)
+	ax[0].set_ylim(-fc*mx, fc*mx)
 	ax[1].scatter(None, None, marker='.', color='b', label='Heel Contact')
 	ax[1].scatter(None, None, marker='.', color='k', label='Push Off')
 	ax[1].legend(loc='best')
@@ -309,7 +324,9 @@ def initialize(config):
 def run(config):
 
 	config = dict(optimize(config))
-	config['plot']=True
+	if config['optimize']:
+		print(config['X1'], config['X2'], config['X3'], config['X4'], config['X5'],
+		config['X6'], config['X7'], config['X8'])
 	ax = initialize(config)
 	simulate(config, ax)
 	plot(config, config['frames'], ax, True)
@@ -328,11 +345,12 @@ config = {
 		'L1':np.nan,'L2':np.nan,'L3':np.nan,'L4':np.nan,
 		'theta1':np.nan, 'theta2':np.nan,
 		'theta3':np.nan, 'theta4':np.nan,
-		'def_theta3':np.nan, 'stance':True,
-		'draw':1,'fc': 10, 'pause':.01, 'inc_fac': +90,
-		'frames':5, 'filename':"points.csv", 
+		'def_theta3':np.nan, 'stance':True, 'swing': False,
+		'draw':1,'fc': 10, 'pause':0.1, 'inc_fac': +180,
+		'frames':120, 'filename':"points.txt", 
 		'wait at end': 100, 'plot':True, 'readfile':True,
-		'optimize':False
+		'optimize':False, 'len_inc':2, 'frames_new': 10,
+		'inc_fac_new': +180
 		}
 
 config_constt = dict(config)
