@@ -2,6 +2,7 @@ import numpy as np
 from termcolor import colored
 import matplotlib.pyplot as plt
 import pandas as pd
+from matplotlib.pyplot import xticks, yticks
 from tqdm import tqdm
 		
 def read_file(config):
@@ -318,6 +319,11 @@ def initialize(config):
 	ax[0].set_ylim(-fc*mx, fc*mx)
 	ax[1].scatter(None, None, marker='.', color='b', label='Heel Contact')
 	ax[1].scatter(None, None, marker='.', color='k', label='Push Off')
+	ax[1].set_xlim(0, config['frames'])
+	ax[1].set_ylim(-0.20, 0.25)
+	ax[1].grid(True)
+	ax[1].set_yticks(np.arange(-0.20, .25, step=0.02))
+	ax[1].set_xticks(np.arange(0, config['frames'], 1))
 	ax[1].legend(loc='best')
 	return ax
 	
@@ -347,7 +353,7 @@ config = {
 		'theta3':np.nan, 'theta4':np.nan,
 		'def_theta3':np.nan, 'stance':True, 'swing': False,
 		'draw':1,'fc': 10, 'pause':0.1, 'inc_fac': +180,
-		'frames':120, 'filename':"points.txt", 
+		'frames':10, 'filename':"points.txt", 
 		'wait at end': 100, 'plot':True, 'readfile':True,
 		'optimize':False, 'len_inc':2, 'frames_new': 10,
 		'inc_fac_new': +180
